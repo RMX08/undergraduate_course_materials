@@ -1,0 +1,59 @@
+import requests
+
+# 每次申请容器需要更改port
+url = 'http://10.140.32.159:47300/cgi-bin/login'
+
+flag2 = [
+    0x19,0x6d,0x71,0x03,0x3f,0x00,0x64,0x5b,0x72,0x65,0x37,
+    0xffffff87,0x1f,0xffffffaf,0x40,0x41,0x5f,0x7e,0x7f,0x01,
+    0x3f,0x68,0x0c,0x33,0x11,0x53,0x00,0xffffffbd,0x77,0xffffffba,
+    0x55,0x54,0x50,0x23,0x6a,0x0d,0x35,0x68,0x0c,0x33,0x14,0x1a,
+    0x18,0xfffffff4,0x3e,0xfffffff3,0x1c,0x1d,0x50,0x71,0x6c,0x13,
+    0x2a,0x77,0x13,0x2c,0x0c,0x4b,0x01,0xffffffed,0x7e,0xffffffb3,0x5c,0x5d
+]
+
+keys = [
+        0x7F, 0x12, 0x2C, 0x4A, 0x0B, 0x5D, 0x64, 0x3F,
+        0x45, 0x23, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0x01
+    ]
+
+def get_flag():
+    # 第一个flag
+    # 计算 password
+    username = 'superadmin'
+    password = ""
+    for i in range(15):
+        password += chr((i + 105) ^ 0x3A)
+
+    print(f"Login -> Username: {username} , Password: {password}")
+    print('-------- login ---------')
+
+    # 发送请求
+    payload = f"username={username}&password={password}"
+    ret = requests.post(url, data=payload)
+    print(ret.text)
+
+    # 处理第二个flag
+    cipher = [x & 0xFF for x in flag2]
+
+    # 逆向循环异或
+    result = [0] * 64
+    result[0] = cipher[0] ^ keys[0]
+    for k in range(1,64):
+        result[k] = cipher[k] ^ keys[k%16] ^ cipher[k-1]
+
+    # 逆向矩阵转置
+    final_flag2 = [0] * 64
+    for i in range(8):
+        for j in range(8):
+            final_flag2[8*i + j] = result[8*j + i]
+
+    FLAG2 = "".join(chr(b) for b in final_flag2 if 32 <= b <= 126)
+    print('-------- FLAG2 --------')
+    print(f"Flag 2: {FLAG2}")
+
+def main():
+    get_flag()
+
+if __name__ == "__main__":
+    main()
