@@ -1,0 +1,38 @@
+clear; clc;
+
+% --- 参数设置 ---
+lambda = 632.8e-9;  % 氦氖激光波长 (米)
+R = 1.0;            % 透镜曲率半径 (米)
+L = 0.005;          % 观测范围半径 (米)
+N = 500;            % 采样点数
+[X, Y] = meshgrid(linspace(-L, L, N));
+r_sq = X.^2 + Y.^2; % 距离中心的平方
+
+% --- 动画设置 ---
+h_max = 5 * lambda; % 最大上升高度 (上升2个波长)
+steps = 100;        % 动画帧数
+h_list = linspace(0, h_max, steps);
+
+figure('Color', 'k', 'Name', '牛顿环动态模拟');
+
+for i = 1:steps
+    h = h_list(i); % 当前透镜上升的高度
+    
+    % 计算空气层厚度 (近似公式 d = r^2 / 2R)
+    d = r_sq / (2 * R) + h;
+    
+    % 计算光程差 (包含半波损失)
+    phi = (2 * pi / lambda) * (2 * d) + pi;
+    
+    % 计算光强分布
+    I = 0.5 * (1 + cos(phi));
+    
+    % 绘图
+    imagesc([-L, L], [-L, L], I);
+    colormap(gray); % 使用黑白条纹，也可改用 'hot' 模拟单色光
+    axis square;
+    title(['透镜上升高度 h = ', num2str(h/1e-9, '%.1f'), ' nm'], 'Color', 'w');
+    set(gca, 'XColor', 'none', 'YColor', 'none'); % 隐藏坐标轴
+    drawnow; % 刷新图形
+    pause(0.05);
+end
