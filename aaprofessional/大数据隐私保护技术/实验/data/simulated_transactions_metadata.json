@@ -1,0 +1,27 @@
+{
+  "format": "one user transaction per line; unique item IDs separated by spaces",
+  "parameters": {
+    "number_of_users": 10000,
+    "item_domain": [
+      1,
+      100
+    ],
+    "transaction_length_model": "1 + Poisson(mean_extra_items), clipped at max_transaction_length",
+    "mean_extra_items": 4.5,
+    "max_transaction_length": 20,
+    "item_popularity_model": "Zipf distribution with a per-user preferred-category boost",
+    "zipf_exponent": 1.1,
+    "number_of_categories": 10,
+    "preferred_category_boost": 4.0,
+    "random_seed": 20260914
+  },
+  "observed_statistics": {
+    "number_of_transactions": 10000,
+    "total_item_occurrences": 54824,
+    "minimum_transaction_length": 1,
+    "maximum_transaction_length": 15,
+    "mean_transaction_length": 5.4824,
+    "items_with_nonzero_frequency": 100
+  },
+  "privacy_analysis_note": "The configured maximum transaction length is the per-user clipping bound used later for central-DP sensitivity analysis."
+}
