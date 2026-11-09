@@ -1,0 +1,129 @@
+using System;
+using System.IO;
+using System.Linq;
+
+namespace GM10DataAnalysis
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // 1. 读取文件并过滤空行
+            string filePath = "D:\yyr\study\物联网\实验2.1\gm10data.txt";
+            if (!File.Exists(filePath))
+            {
+                Console.WriteLine("无该文件，解析失败！");
+                Console.ReadKey();
+                return;
+            }
+            string[] allLines = File.ReadAllLines(filePath)
+                                   .Select(line => line.TrimEnd('\r', '\n')) // 移除换行符
+                                   .Where(line => !string.IsNullOrWhiteSpace(line))
+                                   .ToArray();
+
+            string dateStr = string.Empty;
+            string timeStr = string.Empty;
+            Console.WriteLine("GM10返回数据：");
+
+            // 2. 解析日期和时间
+            foreach (var line in allLines)
+            {
+                if (line.StartsWith("DATE"))
+                {
+                    // DATE_yy/mo/dd 格式：截取空格后的部分
+                    string datePart = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[1];
+                    string[] dateParts = datePart.Split('/');
+                    dateStr = $"20{dateParts[0]}-{dateParts[1]}-{dateParts[2]}";
+                }
+                else if (line.StartsWith("TIME"))
+                {
+                    // TIME_hh:mm:ss.mmmt 格式：截取空格后的部分，去除毫秒和预留位
+                    string timePart = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[1];
+                    timeStr = timePart.Split('.')[0]; // 保留hh:mm:ss
+                }
+            }
+            Console.WriteLine($"日期时间：{dateStr}，{timeStr}");
+
+            // 3. 解析传感数据行（固定位置截取，核心修正）
+            foreach (var line in allLines)
+            {
+                // 仅处理传感数据行（以状态字符开头：N/D/S/O/E/B）
+                if (line.Length >= 20 && "NDSOEB".Contains(line[0].ToString()))
+                {
+                    try
+                    {
+                        // 固定位置截取所有字段（关键：不依赖空格分割）
+                        string dataStatus = line[0].ToString();          // 数据状态（s）
+                        string channelNoStr = line.Substring(2, 4).TrimStart('0'); // 通道号（cccc），去前导零
+                        string alarmStatus = line.Substring(6, 4).Trim(); // 报警状态（a1a2a3a4），去空格
+                        string unit = line.Substring(10, 10).Trim();       // 单位（10字符），去空格
+                        string valuePart = line.Substring(20); // 数值部分（fddddddddE-pp）
+
+                        // 解析数值部分
+                        double actualValue = 0;
+                        bool isInvalid = false;
+
+                        if (valuePart.Length >= 12) // 数值部分至少12位（+00000000E-00）
+                        {
+                            char sign = valuePart[0]; // 符号（+/-）
+                            string mantissa = valuePart.Substring(1, 8); // 8位尾数
+                            int exponentIndex = valuePart.LastIndexOf("E-") + 2; // 指数部分前的E位置
+                            string exponentPart = valuePart.Substring(exponentIndex, 2); // 指数pp
+
+                            // 数值转换（异常处理：避免格式错误导致崩溃）
+                            if (double.TryParse(mantissa, out double mantissaNum) && int.TryParse(exponentPart, out int exponent))
+                            {
+                                actualValue = (sign == '+' ? 1 : -1) * mantissaNum * Math.Pow(10, -exponent);
+                                actualValue = Math.Round(actualValue, 1); // 保留1位小数
+                            }
+                            else
+                            {
+                                isInvalid = true;
+                            }
+                        }
+                        else
+                        {
+                            isInvalid = true;
+                        }
+
+                        // 判断数据是否有效（结合状态和解析结果）
+                        string valueDesc = string.Empty;
+                        if (isInvalid || dataStatus != "N")
+                        {
+                            // 非N状态（D/S/O/E/B）或数值解析失败，判定为无效值
+                            valueDesc = "无效值";
+                            // 补充状态说明
+                            switch (dataStatus)
+                            {
+                                case "D": valueDesc += "（差值输入）"; break;
+                                case "S": valueDesc += "（不使用）"; break;
+                                case "O": valueDesc += "（溢出）"; break;
+                                case "E": valueDesc += "（错误）"; break;
+                                case "B": valueDesc += "（断偶）"; break;
+                            }
+                        }
+                        else
+                        {
+                            valueDesc = $"{actualValue:F1}";
+                            // 补充报警状态（如有）
+                            if (!string.IsNullOrEmpty(alarmStatus))
+                            {
+                                valueDesc += $"（报警：{alarmStatus}）";
+                            }
+                        }
+
+                        // 输出结果（含报警状态和有效性判断）
+                        Console.WriteLine($"通道{channelNoStr}：{valueDesc}{unit}；");
+                    }
+                    catch (Exception ex)
+                    {
+                        // 单个通道解析失败不影响整体，输出错误提示
+                        Console.WriteLine($"通道解析失败：{line} | 错误：{ex.Message}");
+                    }
+                }
+            }
+
+            return; // 结束解析
+        }
+    }
+}

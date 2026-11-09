@@ -1,0 +1,14 @@
+D:\yyr\study\物联网\实验2.2\bin\Debug\net10.0\实验2.2.exe
+D:\yyr\study\物联网\实验2.2\bin\Debug\net10.0\实验2.2.deps.json
+D:\yyr\study\物联网\实验2.2\bin\Debug\net10.0\实验2.2.runtimeconfig.json
+D:\yyr\study\物联网\实验2.2\bin\Debug\net10.0\实验2.2.dll
+D:\yyr\study\物联网\实验2.2\bin\Debug\net10.0\实验2.2.pdb
+D:\yyr\study\物联网\实验2.2\obj\Debug\net10.0\实验2.2.GeneratedMSBuildEditorConfig.editorconfig
+D:\yyr\study\物联网\实验2.2\obj\Debug\net10.0\实验2.2.AssemblyInfoInputs.cache
+D:\yyr\study\物联网\实验2.2\obj\Debug\net10.0\实验2.2.AssemblyInfo.cs
+D:\yyr\study\物联网\实验2.2\obj\Debug\net10.0\实验2.2.csproj.CoreCompileInputs.cache
+D:\yyr\study\物联网\实验2.2\obj\Debug\net10.0\实验2.2.dll
+D:\yyr\study\物联网\实验2.2\obj\Debug\net10.0\refint\实验2.2.dll
+D:\yyr\study\物联网\实验2.2\obj\Debug\net10.0\实验2.2.pdb
+D:\yyr\study\物联网\实验2.2\obj\Debug\net10.0\实验2.2.genruntimeconfig.cache
+D:\yyr\study\物联网\实验2.2\obj\Debug\net10.0\ref\实验2.2.dll
