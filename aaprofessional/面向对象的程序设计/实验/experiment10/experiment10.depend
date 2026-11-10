@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1686648721 source:d:\yyr\Ñ§Ï°\ÊµÑé\test c++\experiment10\main.cpp
+	<iostream>
+	<fstream>
+	<algorithm>
+
