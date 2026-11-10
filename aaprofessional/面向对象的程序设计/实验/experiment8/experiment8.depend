@@ -1,0 +1,10 @@
+# depslib dependency file v1.0
+1685358296 source:d:\yyr\学习\实验\test c++\experiment8\main.cpp
+	<iostream>
+	"LinkedList.h"
+
+1685376129 d:\yyr\学习\实验\test c++\experiment8\linkedlist.h
+	"Node.h"
+
+1685290405 d:\yyr\学习\实验\test c++\experiment8\node.h
+

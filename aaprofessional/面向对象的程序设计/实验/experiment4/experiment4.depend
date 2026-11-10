@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1679993608 source:d:\yyr\学习\实验\test c++\experiment4\main.cpp
+	"Clock.h"
+	<iostream>
+
+1679993829 d:\yyr\学习\实验\test c++\experiment4\clock.h
+
