@@ -1,0 +1,219 @@
+CREATE DATABASE lab3;
+
+USE lab3;
+
+CREATE TABLE student
+(
+    SNO         CHAR(8)     NOT NULL    COMMENT "学号" PRIMARY KEY ,
+    SNAME       VARCHAR(20) NOT NULL    COMMENT "姓名",
+    SSEX        CHAR        NOT NULL    COMMENT "性别",
+    SBIRTHDATE  DATE        NOT NULL    COMMENT "出生日期",
+    SMAJOR      VARCHAR(20) NOT NULL    COMMENT "主修专业"
+)COMMENT "学生";
+
+INSERT INTO student
+VALUES ('20180001','李勇','男','2000-3-8','信息安全'),
+       ('20180002','刘晨','女','1999-9-1','计算机科学与技术'),
+       ('20180003','王敏','女','2001-8-1','计算机科学与技术'),
+       ('20180004','张立','男','2000-1-8','计算机科学与技术'),
+       ('20180005','陈新奇','男','2001-11-1','信息管理与信息系统'),
+       ('20180006','赵明','男','2000-6-12','数据科学与大数据技术'),
+       ('20180007','王佳佳','女','2001-12-7','数据科学与大数据技术');
+
+DROP TABLE IF EXISTS COURSE;
+
+CREATE TABLE COURSE
+(
+    CNO         CHAR(5)     NOT NULL    COMMENT "课程号" PRIMARY KEY ,
+    CNAME       VARCHAR(20) NOT NULL    COMMENT "课程名" UNIQUE ,
+    CCREDIT     INT         NOT NULL    COMMENT "学分",
+    CPNO        CHAR(5)     COMMENT "先修课",
+    FOREIGN KEY (CPNO) REFERENCES COURSE(CNO) ON UPDATE CASCADE
+)COMMENT "课程";
+
+INSERT INTO COURSE
+VALUES ('81001','程序设计基础与C语言','4',NULL),
+       ('81002','数据结构','4','81001'),
+       ('81003','数据库系统概论','4','81002'),
+       ('81004','信息系统概论','4','81003'),
+       ('81005','操作系统','4','81001'),
+       ('81006','Python语言','3','81002'),
+       ('81007','离散数学','4',NULL),
+       ('81008','大数据技术概论','4','81003');
+
+CREATE TABLE SC
+(
+    SNO            CHAR(8)     NOT NULL    COMMENT "学号",
+    CNO            CHAR(5)     NOT NULL    COMMENT "课程号",
+    GRADE          SMALLINT    NOT NULL    COMMENT "成绩",
+    SEMESTER       CHAR(5)     NOT NULL    COMMENT "开课学期",
+    TEACHINGCLASS  CHAR(8)     NOT NULL    COMMENT "教学班",
+    PRIMARY KEY (SNO, CNO),
+    FOREIGN KEY SC(SNO) REFERENCES student(SNO) ON UPDATE CASCADE ,
+    FOREIGN KEY SC(CNO) REFERENCES COURSE(CNO) ON UPDATE CASCADE
+)COMMENT "选修";
+
+INSERT INTO SC
+VALUES ('20180001','81001','85','20192','81001-01'),
+       ('20180001','81002','96','20201','81002-01'),
+       ('20180001','81003','87','20202','81003-01'),
+       ('20180002','81001','80','20192','81001-02'),
+       ('20180002','81002','98','20201','81002-01'),
+       ('20180002','81003','71','20202','81003-02'),
+       ('20180003','81001','81','20192','81001-01'),
+       ('20180003','81002','76','20201','81002-02'),
+       ('20180004','81001','56','20192','81001-02'),
+       ('20180004','81002','97','20201','81002-02'),
+       ('20180005','81003','68','20202','81003-01');
+
+
+# SQL查询
+
+#1、查询计算机科学与技术和数据科学与大数据技术的学生姓名、出生日期和主修专业
+SELECT SNAME,SNO,SMAJOR
+FROM student
+WHERE SMAJOR IN ('计算机科学与技术','数据科学与大数据技术');
+
+#2、查询选修了81003课程的学生的学号、名字及其成绩，查询结果按分数排列
+SELECT student.SNO, student.SNAME, SC.GRADE
+FROM student, SC
+WHERE student.SNO = SC.SNO AND CNO = '81003'
+ORDER BY GRADE DESC ;
+
+#3、查询全体学生的姓名及其年龄
+SELECT SNAME,
+       (extract(year from current_date) - extract(year from SBIRTHDATE)) "年龄"
+FROM student;
+
+#4、查询课程名称为DB_开头，且倒数第三个字符为i的课程名称和课程号
+SELECT CNAME,CNO
+FROM COURSE
+WHERE CNAME LIKE 'DB\_%i__' ;
+
+#5、查询选修课程数超过2门的学生学号
+SELECT SNO
+FROM SC
+GROUP BY SNO
+HAVING COUNT(*) > 2;
+
+#6、找出每个学生超过他自己选修课程的平均成绩的课程号
+SELECT SNO,CNO
+FROM SC X
+WHERE GRADE >= (SELECT AVG(GRADE)
+                FROM SC Y
+                WHERE Y.SNO = X.SNO);
+
+#7、查询与“刘晨”在同一个专业的学生学号、姓名、主修专业
+SELECT SNO,SNAME,SMAJOR
+FROM student
+WHERE SMAJOR IN
+    (SELECT SMAJOR
+     FROM student
+     WHERE SNAME = '刘晨');
+
+#8、查询选修了课程的学生人数
+SELECT COUNT(DISTINCT SNO)
+FROM SC;
+
+#9、查询选修了81001课程的全部学生
+SELECT SNO,SNAME
+FROM student
+WHERE EXISTS
+    (SELECT *
+     FROM SC
+     WHERE CNO = '81001');
+
+#10、查询代至少选修了学生20180002选修的全部课程的学生的学号
+SELECT SNO
+FROM student
+WHERE NOT EXISTS
+    (SELECT *
+     FROM SC X
+     WHERE X.SNO = '20180002' AND
+           NOT EXISTS
+               (SELECT *
+                FROM SC Y
+                WHERE Y.SNO = student.SNO AND Y.CNO = X.CNO));
+
+SELECT DISTINCT SNO
+FROM SC X
+WHERE NOT EXISTS
+    (SELECT CNO FROM SC Y WHERE Y.SNO = '20180002')
+    EXCEPT
+    (SELECT CNO FROM SC Z WHERE Z.SNO = X.SNO);
+
+#11、查询所有没有选修81002号课程的学生姓名
+SELECT SNAME
+FROM student
+WHERE NOT EXISTS
+    (SELECT *
+     FROM SC
+     WHERE SNO = student.SNO AND CNO = '81002');
+
+#12、将计算机科学与技术的学生成绩置为0
+UPDATE SC
+SET GRADE = 0
+WHERE SNO IN
+      (SELECT SNO
+       FROM student
+       WHERE SMAJOR = '计算机科学与技术');
+
+
+#13、查询每一门课的间接先修课（先修课的先修课）
+SELECT FIRST.CNO,SECOND.CPNO '间接先修'
+FROM COURSE FIRST, COURSE SECOND;
+
+#14、查询每个学生的学号姓名以及选课情况
+SELECT STU.SNO,SNAME,CNO,GRADE,SEMESTER
+FROM student STU LEFT OUTER JOIN SC S on STU.SNO = S.SNO;
+
+#15、查询即选修81001课程又选修81002课程的学生
+SELECT SC.SNO,SNAME
+FROM SC,student
+WHERE SC.SNO = student.SNO AND CNO = '81001'
+INTERSECT
+SELECT SC.SNO,SNAME
+FROM SC,student
+WHERE SC.SNO = student.SNO AND CNO = '81002';
+
+#16、找出每个学生超过他自己选修课程平均成绩的课程号
+SELECT SNO,CNO
+FROM SC,
+     (SELECT SNO,AVG(GRADE) FROM SC GROUP BY SNO)
+    AS AVG_SC(AVG_SNO,AVG_GRADE)
+WHERE SC.SNO = AVG_SC.AVG_SNO AND GRADE >= AVG_GRADE;
+
+#17、查询选修选修课程81001和81002课程的学生（用exist改写）
+SELECT SNO
+FROM SC X
+WHERE X.CNO = '81001' AND EXISTS
+    (SELECT *
+     FROM SC Y
+     WHERE X.SNO = Y. SNO AND Y.CNO = '81002');
+
+#18、查询其他戏中比计算机科学与技术某一学生年龄都小的学生姓名和年龄
+SELECT  SNAME,
+        (EXTRACT(year from current_date) - EXTRACT(year from SBIRTHDATE)) "年龄"
+FROM student
+WHERE SBIRTHDATE < ANY (SELECT SBIRTHDATE
+                        FROM student
+                        WHERE SMAJOR = '计算机科学与技术');
+
+#19、查询每个学生的最高成绩及其对应的课程名称
+SELECT S.SNO,SNAME,CNAME,MAX(GRADE) AS highest_grade
+FROM SC X
+JOIN COURSE C ON C.CNO = X.CNO
+JOIN student S ON X.SNO = S.SNO
+GROUP BY S.SNO,C.CNAME
+HAVING MAX(GRADE) = (
+    SELECT MAX(GRADE)
+    FROM SC Y
+    WHERE Y.SNO = S.SNO
+    );
+
+#20、查询每门课程获得80分以上成绩的概率
+SELECT CNO,
+       COUNT(CASE WHEN GRADE >= 80 THEN 1 END) * 100.0 / COUNT(*)
+        AS COURSE_RATE
+FROM SC
+GROUP BY CNO;

@@ -1,0 +1,23 @@
+USE supply;
+
+DROP VIEW IF EXISTS J1_SPJ;
+
+CREATE VIEW J1_SPJ
+AS
+    SELECT SNO,PNO,QTY
+    FROM spj
+    WHERE JNO = (
+        SELECT JNO
+        FROM j
+        WHERE JNAME = '三建'
+        );
+
+#找出三建工程项目使用的各种零件代码一起数量
+SELECT PNO,SUM(QTY)
+FROM J1_SPJ
+GROUP BY PNO;
+
+#找出供应商S1供应三建工程的情况
+SELECT *
+FROM J1_SPJ
+WHERE SNO = 'S1';

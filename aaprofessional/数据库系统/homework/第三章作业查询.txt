@@ -1,0 +1,74 @@
+USE supply;
+
+#1、找出所有供应商的姓名和所在城市
+SELECT SNAME,CITY
+FROM s;
+
+#2、找出所有零件的名称、颜色、重量
+SELECT PNAME,COLOR,WEIGHT
+FROM p;
+
+#3、找出使用供应商S1所供应零件的工程代码
+SELECT JNO
+FROM spj
+WHERE SNO = 'S1';
+
+#4、找出工程项目J2使用的各种零件的名称及其数量
+SELECT p.PNAME,spj.QTY
+FROM p,spj
+WHERE p.PNO = spj.PNO AND JNO = 'J2';
+
+#5、找出上海厂商供应的所有零件代码
+SELECT DISTINCT PNO
+FROM spj
+WHERE SNO = (
+    SELECT SNO
+    FROM s
+    WHERE CITY = '上海'
+    );
+
+#6、找出使用上海产的零件的工程名称
+SELECT DISTINCT JNO
+FROM spj
+WHERE SNO = (
+    SELECT SNO
+    FROM s
+    WHERE CITY = '上海'
+    );
+
+#7、找出没有使用天津产的零件的工程代码
+SELECT DISTINCT JNO
+FROM spj
+WHERE SNO NOT IN (
+    SELECT SNO
+    FROM S
+    WHERE CITY = '天津'
+);
+
+#8、把全部红色零件的颜色改成蓝色
+UPDATE p
+SET COLOR = '蓝'
+WHERE COLOR = '红';
+
+#9、把由S5供给J2的零件P6 改为由S3 供给
+UPDATE spj
+SET SNO = 'S3'
+WHERE SNO = 'S5' AND JNO = 'J2' AND PNO = 'P6';
+
+#10、从供应商关系中删除S2的记录，并从供应情况关系中删除相应的记录
+DELETE
+FROM spj
+WHERE SNO = 'S2';
+
+DELETE
+FROM s
+WHERE SNO = 'S2';
+
+#11、请将（S2,J6,P4,200)插入供应情况
+#由于外码与主码范围不匹配会报错
+INSERT INTO spj
+VALUES ('S2','J6','P4',200);
+
+
+
+

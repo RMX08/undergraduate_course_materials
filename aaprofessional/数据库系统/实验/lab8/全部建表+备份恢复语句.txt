@@ -1,0 +1,100 @@
+USE education_system;
+
+DROP TABLE IF EXISTS student_instructor;
+CREATE TABLE student_instructor
+(
+    stu_id      int      NOT NULL       COMMENT '学号'    PRIMARY KEY ,
+    cs_id       int      NOT NULL       COMMENT '班级号',
+    instructor  varchar(20)   NOT NULL  COMMENT '辅导员姓名',
+    FOREIGN KEY student_instructor(stu_id) REFERENCES student(stu_id),
+    FOREIGN KEY student_instructor(cs_id) REFERENCES class(cs_id)
+)COMMENT '学生-辅导员 2NF';
+
+INSERT INTO student_instructor
+VALUES (1,1,'王小菲'),
+       (2,2,'乔英');
+
+DROP TABLE IF EXISTS teacher_project_guide;
+CREATE TABLE teacher_project_guide
+(
+    stu_id  int     NOT NULL PRIMARY KEY,
+    tc_id   int     NOT NULL,
+    col_id  int     NOT NULL,
+    FOREIGN KEY (stu_id) REFERENCES student(stu_id),
+    FOREIGN KEY (tc_id) REFERENCES teacher(tc_id),
+    FOREIGN KEY (col_id) REFERENCES college(col_id)
+) COMMENT '3NF非BCNF实验表：决定因素不全是候选码';
+
+INSERT INTO teacher_project_guide
+VALUES (1, 1, 3);
+
+INSERT INTO student VALUES (4,'小王',2,2,1);
+INSERT INTO student_instructor VALUES (4,1,'王小菲');
+
+INSERT INTO teacher_project_guide (tc_id, col_id) VALUES (3, 1);
+
+DELETE FROM teacher_project_guide WHERE stu_id = 1;
+
+# 触发器
+ALTER TABLE student ADD COLUMN AvgGrade DECIMAL(4,1)
+    DEFAULT 0.0 COMMENT '平均成绩';
+
+UPDATE student s
+SET s.AvgGrade = (
+    SELECT AVG(grade)
+    FROM take_course tc
+    WHERE tc.stu_id = s.stu_id
+)
+WHERE EXISTS (SELECT 1 FROM take_course tc WHERE tc.stu_id = s.stu_id);
+
+# 录入成绩时的触发器
+DELIMITER //
+CREATE TRIGGER trg_after_insert_grade
+AFTER INSERT ON take_course
+FOR EACH ROW
+BEGIN
+    UPDATE student
+    SET AvgGrade = (SELECT AVG(grade) FROM take_course
+                                      WHERE stu_id = NEW.stu_id)
+    WHERE stu_id = NEW.stu_id;
+END //
+
+# 修改成绩时的触发器
+CREATE TRIGGER trg_after_update_grade
+AFTER UPDATE ON take_course
+FOR EACH ROW
+BEGIN
+    -- 只有当成绩字段发生变化时才更新，节省开销
+    IF OLD.grade <> NEW.grade THEN
+        UPDATE student
+        SET AvgGrade = (SELECT AVG(grade) FROM take_course
+                                          WHERE stu_id = NEW.stu_id)
+        WHERE stu_id = NEW.stu_id;
+    END IF;
+END //
+DELIMITER ;
+
+# 触发触发器
+SELECT stu_id, stu_name, AvgGrade FROM student WHERE stu_id = 1;
+
+# 给学号为1的学生加一门课成绩
+INSERT INTO take_course (tcrs_id, stu_id, crs_id, grade)
+VALUES (4, 1, 3, 60.0);
+
+# 修改学号为1的学生的成绩
+UPDATE take_course SET grade = 96.0 WHERE tcrs_id = 4;
+
+# 备份
+SHOW VARIABLES LIKE 'log_bin';
+
+# 刷新日志
+FLUSH LOGS;
+
+DROP DATABASE education_system;
+CREATE DATABASE education_system;
+
+# 事务故障
+START TRANSACTION;
+UPDATE student SET stu_name = '错误的名字' WHERE stu_id = 1;
+SELECT * FROM student;
+ROLLBACK ;
