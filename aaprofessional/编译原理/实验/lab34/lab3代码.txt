@@ -1,0 +1,154 @@
+%{
+#include <stdio.h> 
+#define PROGRAM      1
+#define VAR          2
+#define INTEGER      3
+#define REAL         4
+#define BEGINN       5
+#define END          6
+#define IF           7
+#define THEN         8
+#define ELSE         9
+#define WHILE        10
+#define DO           11
+#define ID           12
+#define INT          13
+#define FLOAT        14
+#define COMMA        15
+#define COLON        16
+#define SEMICOLON    17
+#define LPAREN       18
+#define RPAREN       19
+#define PERIOD       20
+#define ASSIGN       21
+#define EQ           22
+#define NE           23
+#define LT           24
+#define LE           25
+#define GT           26
+#define GE           27
+#define PLUS         28
+#define MINUS        29
+#define TIMES        30
+#define DIVIDE       31
+#define ERRORCHAR    32
+#define NEWLINE      33
+%}
+ 
+delim  [ \t \n]
+ws   {delim}+
+letter     [A-Za-z]
+digit  [0-9]
+id   {letter}({letter}|{digit})*
+/*number     {digit}+(\.{digit}+)?(E[+-]?{digit}+)?*/
+/* 整数：一个或多个数字 */
+int_num     {digit}+
+/* 浮点数：可以是 .12 或 12.34 */
+float_num   (\.{digit}+)|({digit}+\.{digit}+)
+/* 状态（或条件）定义可以定义在这里 
+ * INITIAL是一个默认的状态，不需要定义
+ */
+%s COMMENT
+%%
+<INITIAL>"/*"     {BEGIN COMMENT;}
+<COMMENT>"*/"     {BEGIN INITIAL;}
+<COMMENT>.|\n     {;}
+<INITIAL>{ws}           {;}
+<INITIAL>"PROGRAM"      { return PROGRAM; }
+<INITIAL>"VAR"          { return VAR; }
+<INITIAL>"INTEGER"      { return INTEGER; }
+<INITIAL>"REAL"         { return REAL; }
+<INITIAL>"BEGIN"        { return BEGINN; }
+<INITIAL>"END"          { return END; }
+<INITIAL>"IF"           { return IF; }
+<INITIAL>"THEN"         { return THEN; }
+<INITIAL>"ELSE"         { return ELSE; }
+<INITIAL>"WHILE"        { return WHILE; }
+<INITIAL>"DO"           { return DO; }
+<INITIAL>{id}           { return ID; }
+<INITIAL>{float_num}    { return FLOAT; }
+<INITIAL>{int_num}      { return INT; }
+<INITIAL>":="           { return ASSIGN; }
+<INITIAL>":"            { return COLON; }
+<INITIAL>","            { return COMMA; }
+<INITIAL>";"            { return SEMICOLON; }
+<INITIAL>"("            { return LPAREN; }
+<INITIAL>")"            { return RPAREN; }
+<INITIAL>"."            { return PERIOD; }
+<INITIAL>"="            { return EQ; }
+<INITIAL>"<>"           { return NE; }
+<INITIAL>"<="           { return LE; }
+<INITIAL>"<"            { return LT; }
+<INITIAL>">="           { return GE; }
+<INITIAL>">"            { return GT; }
+<INITIAL>"+"            { return PLUS; }
+<INITIAL>"-"            { return MINUS; }
+<INITIAL>"*"            { return TIMES; }
+<INITIAL>"/"            { return DIVIDE; }
+<INITIAL>.      {return ERRORCHAR;}
+ 
+%%
+int yywrap (){
+  return 1;
+}
+void writeout(int c){
+  switch(c){
+    case PROGRAM: fprintf(yyout, "(PROGRAM, \"%s\") ", yytext); break;
+    case VAR: fprintf(yyout, "(VAR, \"%s\") ", yytext); break;
+    case INTEGER: fprintf(yyout, "(INTEGER, \"%s\") ", yytext); break;
+    case REAL: fprintf(yyout, "(REAL, \"%s\") ", yytext); break;
+    case BEGINN: fprintf(yyout, "(BEGIN, \"%s\") ", yytext); break;
+    case END: fprintf(yyout, "(END, \"%s\") ", yytext); break;
+    case IF: fprintf(yyout, "(IF, \"%s\") ", yytext); break;
+    case THEN: fprintf(yyout, "(THEN, \"%s\") ", yytext); break;
+    case ELSE: fprintf(yyout, "(ELSE, \"%s\") ", yytext); break;
+    case WHILE: fprintf(yyout, "(WHILE, \"%s\") ", yytext); break;
+    case DO: fprintf(yyout, "(DO, \"%s\") ", yytext); break;
+    case ID: fprintf(yyout, "(ID, \"%s\") ", yytext); break;
+    case INT: fprintf(yyout, "(INT, \"%s\") ", yytext); break;
+    case FLOAT: fprintf(yyout, "(FLOAT, \"%s\") ", yytext); break;
+    case COMMA: fprintf(yyout, "(COMMA, \"%s\") ", yytext); break;
+    case COLON: fprintf(yyout, "(COLON, \"%s\") ", yytext); break;
+    case SEMICOLON: fprintf(yyout, "(SEMICOLON, \"%s\") ", yytext); break;
+    case LPAREN: fprintf(yyout, "(LPAREN, \"%s\") ", yytext); break;
+    case RPAREN: fprintf(yyout, "(RPAREN, \"%s\") ", yytext); break;
+    case PERIOD: fprintf(yyout, "(PERIOD, \"%s\") ", yytext); break;
+    case ASSIGN: fprintf(yyout, "(ASSIGN, \"%s\") ", yytext); break;
+    case EQ: fprintf(yyout, "(EQ, \"%s\") ", yytext); break;
+    case NE: fprintf(yyout, "(NE, \"%s\") ", yytext); break;
+    case LT: fprintf(yyout, "(LT, \"%s\") ", yytext); break;
+    case LE: fprintf(yyout, "(LE, \"%s\") ", yytext); break;
+    case GT: fprintf(yyout, "(GT, \"%s\") ", yytext); break;
+    case GE: fprintf(yyout, "(GE, \"%s\") ", yytext); break;
+    case PLUS: fprintf(yyout, "(PLUS, \"%s\") ", yytext); break;
+    case MINUS: fprintf(yyout, "(MINUS, \"%s\") ", yytext); break;
+    case TIMES: fprintf(yyout, "(TIMES, \"%s\") ", yytext); break;
+    case DIVIDE: fprintf(yyout, "(DIVIDE, \"%s\") ", yytext); break;
+    case ERRORCHAR: fprintf(yyout, "(ERRORCHAR, \"%s\") ", yytext); break;
+    case NEWLINE: fprintf(yyout, "\n"); break;
+    default:break;
+  }
+  return;
+}
+int main (int argc, char ** argv){
+ int c,j=0;
+ if (argc>=2){
+   if ((yyin = fopen(argv[1], "r")) == NULL){
+     printf("Can't open file %s\n", argv[1]);
+     return 1;
+   }
+   if (argc>=3){
+     yyout=fopen(argv[2], "w");
+   }
+ }
+ while (c = yylex()){
+  writeout(c);
+  j++;
+  if (j%5 == 0) writeout(NEWLINE);
+ }
+ if(argc>=2){
+   fclose(yyin);
+   if (argc>=3) fclose(yyout);
+ }
+ return 0;
+}
